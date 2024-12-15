@@ -1,66 +1,38 @@
-## Foundry
+# Отчет HW4
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+Команды для запуска:
 
-Foundry consists of:
-
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
-
-## Documentation
-
-https://book.getfoundry.sh/
-
-## Usage
-
-### Build
-
-```shell
-$ forge build
+```
+export CERTORAKEY=<personal_access_key>
+certoraRun ./certora/conf/default.conf --optimistic_loop
 ```
 
-### Test
+** Предварительно поставил все для certora - https://docs.certora.com/en/latest/docs/user-guide/install.html 
 
-```shell
-$ forge test
-```
+Отчет до изменений(успешный) - https://prover.certora.com/output/9299541/3153f1a9d7e34a91801449c5cec3ba4c?anonymousKey=b75c4027d09a622c82183cae3b6962bb55f250ed
 
-### Format
+Отчет после изменений - https://prover.certora.com/output/9299541/a9c93b5668f0411f89857764ab64f43a?anonymousKey=1fc156973b02fc746395de85e445693bce43f5af
 
-```shell
-$ forge fmt
-```
+Изменения:
 
-### Gas Snapshots
+- при transferFrom убрана функция, которая тратит allowance
+- при transfer переводится количество монет минус 10
+- при вызове approve мы дополнительно начисляем пользователю токены
 
-```shell
-$ forge snapshot
-```
+Нарушения правил:
 
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
+- Rule: transfer behavior and side effects
+    - изменение: при transfer переводится количество монет минус 10
+    - transfer вызвал revert, и сработал assert на единственные возможные условия реверта, которые не выполнились
+- Rule: transferFrom behavior and side effects
+    - изменение: при transferFrom убрана функция, которая тратит allowance
+    - так как убрана функция, то не срабатывает assert, который проверяет что allowanceBefore больше, чем мы перевели
+- Rule: only the token holder or an approved third party can reduce an account's balance 
+    - изменение: при transferFrom убрана функция, которая тратит allowance
+    - убрали проверку allowance, соответственно можем делать неавторизованные переводы
+- Rule: only the token holder or an approved third party can reduce an account's balance 
+    - изменение: при вызове approve мы дополнительно начисляем пользователю токены
+    - добавляем токены пользователю - нарушаем правило
+- Rule: only mint and burn can change total supply
+    - изменение: при вызове approve мы дополнительно начисляем пользователю токены
+    - нарушен инвариант totalSupply, так как начисляем токены

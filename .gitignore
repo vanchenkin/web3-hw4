@@ -7,3 +7,10 @@ node_modules/
 
 # Mutation
 gambit_out/*
+
+cache/
+out/
+.vscode
+.idea
+
+.env
